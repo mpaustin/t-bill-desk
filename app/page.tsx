@@ -9,10 +9,29 @@ import type { Order } from "@/lib/orders";
 const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const currencyWithCents = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const dateTime = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+const localOrdersKey = "t-bill-orders:orders";
 
 function formatAmountInput(value: string) {
   const digits = value.replace(/[^0-9]/g, "");
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function getLocalOrders(): Order[] {
+  try {
+    const stored = window.localStorage.getItem(localOrdersKey);
+    const parsed = stored ? JSON.parse(stored) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalOrders(orders: Order[]) {
+  try {
+    window.localStorage.setItem(localOrdersKey, JSON.stringify(orders));
+  } catch {
+    // Keep the current in-memory list visible if browser storage is unavailable.
+  }
 }
 
 export default function Home() {
@@ -34,13 +53,39 @@ export default function Home() {
     if (!supabase) return {};
     const { data: sessionData } = await supabase.auth.getSession();
     if (sessionData.session) return { Authorization: `Bearer ${sessionData.session.access_token}` };
-    const { data } = await supabase.auth.signInAnonymously();
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (error) throw error;
     return data.session ? { Authorization: `Bearer ${data.session.access_token}` } : {};
   }
 
   async function loadOrders() {
-    const response = await fetch("/api/orders", { headers: await authHeaders() });
-    if (response.ok) setOrders(await response.json());
+    if (!getSupabaseBrowserClient()) {
+      setOrders(getLocalOrders());
+      return;
+    }
+    try {
+      const response = await fetch("/api/orders", { headers: await authHeaders() });
+      if (response.ok && response.headers.get("x-order-storage") !== "local") setOrders(await response.json());
+      else setOrders(getLocalOrders());
+    } catch {
+      setOrders(getLocalOrders());
+    }
+  }
+
+  function submitLocalOrder() {
+    const order: Order = {
+      id: crypto.randomUUID(),
+      term,
+      amount: numericAmount,
+      yield: selectedPoint?.yield ?? 0,
+      createdAt: new Date().toISOString(),
+    };
+    const nextOrders = [order, ...getLocalOrders()];
+    saveLocalOrders(nextOrders);
+    setMessage("Order submitted successfully.");
+    setOrders(nextOrders);
+    setSubmitting(false);
+    setShowConfirmation(false);
   }
 
   useEffect(() => {
@@ -62,19 +107,32 @@ export default function Home() {
 
   async function submitOrder() {
     setSubmitting(true);
-    const response = await fetch("/api/orders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-      body: JSON.stringify({ term, amount: numericAmount, yield: selectedPoint?.yield }),
-    });
-    const data = await response.json();
-    if (!response.ok) setMessage(data.error || "Unable to submit order.");
-    else {
-      setMessage("Order submitted successfully.");
-      setOrders((current) => [data, ...current]);
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) {
+      submitLocalOrder();
+      return;
     }
-    setSubmitting(false);
-    setShowConfirmation(false);
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify({ term, amount: numericAmount, yield: selectedPoint?.yield }),
+      });
+      const data = await response.json();
+      if (response.headers.get("x-order-storage") === "local" || response.status >= 500) submitLocalOrder();
+      else if (!response.ok) {
+        setMessage(data.error || "Unable to submit order.");
+        setSubmitting(false);
+      }
+      else {
+        setMessage("Order submitted successfully.");
+        setOrders((current) => [data, ...current]);
+        setSubmitting(false);
+        setShowConfirmation(false);
+      }
+    } catch {
+      submitLocalOrder();
+    }
   }
 
   return (

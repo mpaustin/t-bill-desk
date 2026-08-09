@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json((data || []).map((order) => ({ id: order.id, term: order.term, amount: Number(order.amount), yield: Number(order.yield), createdAt: order.created_at })));
   }
-  return NextResponse.json(getOrders());
+  return NextResponse.json(getOrders(), { headers: { "x-order-storage": "local" } });
 }
 
 export async function POST(request: NextRequest) {
@@ -43,5 +43,5 @@ export async function POST(request: NextRequest) {
 
   const order: Order = { id: crypto.randomUUID(), term, amount, yield: yieldValue, createdAt: new Date().toISOString() };
   getOrders().unshift(order);
-  return NextResponse.json(order, { status: 201 });
+  return NextResponse.json(order, { status: 201, headers: { "x-order-storage": "local" } });
 }

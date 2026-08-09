@@ -40,6 +40,7 @@ describe("/api/orders validation and local behavior", () => {
     const historyResponse = await GET(new NextRequest("http://localhost/api/orders"));
 
     expect(response.status).toBe(201);
+    expect(response.headers.get("x-order-storage")).toBe("local");
     expect(created).toMatchObject({ term: "6M", amount: 12500, yield: 4.22 });
     expect(created.id).toEqual(expect.any(String));
     expect(created.createdAt).toEqual(expect.any(String));
