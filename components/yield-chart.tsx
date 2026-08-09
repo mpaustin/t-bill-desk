@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import type { YieldPoint } from "@/lib/treasury";
 
 export function YieldChart({ points }: { points: YieldPoint[] }) {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const width = 900;
   const height = 300;
   const pad = { top: 28, right: 20, bottom: 42, left: 48 };
@@ -14,6 +16,11 @@ export function YieldChart({ points }: { points: YieldPoint[] }) {
   const line = points.map((point, index) => `${x(index)},${y(point.yield)}`).join(" ");
   const area = `${pad.left},${height - pad.bottom} ${line} ${x(points.length - 1)},${height - pad.bottom}`;
   const ticks = [min, min + (max - min) / 2, max];
+  const hoveredPoint = hoveredIndex === null ? null : points[hoveredIndex];
+  const tooltipWidth = 138;
+  const tooltipHeight = 30;
+  const tooltipX = hoveredIndex === null ? 0 : Math.min(Math.max(x(hoveredIndex) - tooltipWidth / 2, pad.left), width - pad.right - tooltipWidth);
+  const tooltipY = hoveredPoint ? Math.max(y(hoveredPoint.yield) - tooltipHeight - 12, pad.top) : 0;
 
   return (
     <div className="overflow-x-auto">
@@ -33,11 +40,19 @@ export function YieldChart({ points }: { points: YieldPoint[] }) {
         <polygon points={area} fill="url(#curve-fill)" />
         <polyline points={line} fill="none" stroke="#56d6c9" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         {points.map((point, index) => (
-          <g key={point.term}>
-            <circle cx={x(index)} cy={y(point.yield)} r="5" fill="#0b1118" stroke="#56d6c9" strokeWidth="2" />
+          <g key={point.term} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)}>
+            <circle cx={x(index)} cy={y(point.yield)} r="5" fill="#0b1118" stroke="#56d6c9" strokeWidth="2" aria-label={`${point.term} Treasury yield ${point.yield.toFixed(2)}%`}>
+              <title>{`${point.term} Treasury: ${point.yield.toFixed(2)}%`}</title>
+            </circle>
             <text x={x(index)} y={height - 16} fill="#91a1ab" fontSize="12" textAnchor="middle">{point.term}</text>
           </g>
         ))}
+        {hoveredPoint && hoveredIndex !== null && (
+          <g pointerEvents="none">
+            <rect x={tooltipX} y={tooltipY} width={tooltipWidth} height={tooltipHeight} rx="6" fill="#0b1118" stroke="#56d6c9" />
+            <text x={tooltipX + tooltipWidth / 2} y={tooltipY + 19} fill="#f5f7f8" fontSize="12" textAnchor="middle">{`${hoveredPoint.term} · ${hoveredPoint.yield.toFixed(2)}%`}</text>
+          </g>
+        )}
       </svg>
     </div>
   );
