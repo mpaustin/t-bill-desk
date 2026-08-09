@@ -27,10 +27,20 @@ The app fetches live Treasury data through `/api/treasury`. If the Treasury feed
 
 ## Supabase setup
 
-1. Create a Supabase project.
-2. In the SQL Editor, run [`supabase/schema.sql`](./supabase/schema.sql).
-3. Enable Anonymous Sign-Ins under Authentication → Providers.
-4. Copy `.env.example` to `.env.local` and fill in the project URL, public anon key, and service-role key:
+The repository includes the Supabase CLI configuration and the tracked migration under [`supabase/migrations`](./supabase/migrations).
+
+```bash
+npm install --save-dev supabase
+npx supabase login
+npx supabase link --project-ref YOUR_PROJECT_REF
+npx supabase db push
+```
+
+The migration creates the `orders` table, RLS policies, and the order constraints. Anonymous sign-ins are enabled in `supabase/config.toml` for the demo project.
+
+Alternatively, run [`supabase/schema.sql`](./supabase/schema.sql) from the Supabase SQL Editor.
+
+Copy `.env.example` to `.env.local` and fill in the project URL, public anon key, and service-role key:
 
 ```bash
 cp .env.example .env.local
