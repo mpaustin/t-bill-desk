@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDemoOrders, type Order } from "@/lib/orders";
+import { getOrders, type Order } from "@/lib/orders";
 import { createClient } from "@supabase/supabase-js";
 
 const hasSupabase = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json((data || []).map((order) => ({ id: order.id, term: order.term, amount: Number(order.amount), yield: Number(order.yield), createdAt: order.created_at })));
   }
-  return NextResponse.json(getDemoOrders());
+  return NextResponse.json(getOrders());
 }
 
 export async function POST(request: NextRequest) {
@@ -42,6 +42,6 @@ export async function POST(request: NextRequest) {
   }
 
   const order: Order = { id: crypto.randomUUID(), term, amount, yield: yieldValue, createdAt: new Date().toISOString() };
-  getDemoOrders().unshift(order);
+  getOrders().unshift(order);
   return NextResponse.json(order, { status: 201 });
 }

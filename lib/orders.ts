@@ -8,10 +8,10 @@ export type Order = {
 
 declare global {
   // eslint-disable-next-line no-var
-  var demoOrders: Order[] | undefined;
+  var ordersStore: Order[] | undefined;
 }
 
-export function getDemoOrders() {
-  globalThis.demoOrders ||= [];
-  return globalThis.demoOrders;
+export function getOrders() {
+  globalThis.ordersStore ||= [];
+  return globalThis.ordersStore;
 }

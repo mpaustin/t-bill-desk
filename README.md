@@ -1,16 +1,14 @@
 # T-Bill Desk
 
-T-Bill Desk is a small full-stack demo for exploring the U.S. Treasury yield curve and submitting simulated Treasury orders.
+T-Bill Desk is a full-stack order workspace for exploring the U.S. Treasury yield curve and submitting Treasury orders.
 
 It:
 
 - Fetches daily par yield curve data from the official U.S. Treasury XML feed.
 - Plots maturities from 1 month through 30 years.
-- Lets a user choose a maturity and submit a paper order amount.
+- Lets a user choose a maturity and submit an order amount.
 - Stores order history in Supabase.
-- Uses anonymous Supabase Auth so the demo does not require account creation.
-
-> This is a demonstration only. Orders are not sent to a brokerage or TreasuryDirect.
+- Uses anonymous Supabase Auth so users can begin without account creation.
 
 ## Prerequisites
 
@@ -145,7 +143,7 @@ The repository already contains `supabase/config.toml` and the database migratio
 
 ## 6. Apply the database and Auth configuration
 
-Push the checked-in Supabase configuration. This enables anonymous sign-ins for the demo:
+Push the checked-in Supabase configuration. This enables anonymous sign-ins:
 
 ```bash
 supabase config push --project-ref "$SUPABASE_PROJECT_REF"
@@ -223,14 +221,14 @@ Use the same exact host and port each time. `localhost:3000`, `localhost:3001`, 
 
 1. Confirm the yield curve loads.
 2. Choose a maturity and enter an amount of at least `$100`.
-3. Submit a paper order.
+3. Submit an order.
 4. Confirm it appears in Order History.
 5. Refresh the page and confirm the order is still present.
 6. In Supabase, open **Table Editor → orders** to inspect the stored row.
 
 The app uses an anonymous Supabase user. Restarting the Next.js server does not create a new user; the browser session is retained. Clearing browser data, using a different browser, using an incognito window, or changing the origin creates a different anonymous user and therefore a different order history.
 
-If the Treasury feed is unavailable, the app displays a clearly labeled demo curve so the order workflow remains reviewable.
+If the Treasury feed is unavailable, the app displays fallback market data so the order workflow remains available.
 
 ## Useful commands
 
@@ -289,7 +287,7 @@ app/page.tsx             Main dashboard and order flow
 app/api/treasury         Treasury feed proxy and fallback
 app/api/orders           Supabase-backed order API
 components/yield-chart   Lightweight SVG curve chart
-lib/treasury.ts          Feed URL, parser, and demo curve
+lib/treasury.ts          Feed URL, parser, and fallback curve
 supabase/config.toml     Supabase CLI and Auth configuration
 supabase/migrations      Versioned database migrations
 supabase/schema.sql      SQL equivalent of the orders schema
