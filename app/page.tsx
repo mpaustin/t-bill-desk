@@ -7,13 +7,19 @@ import type { YieldCurve } from "@/lib/treasury";
 import type { Order } from "@/lib/orders";
 
 const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+const currencyWithCents = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const dateTime = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+
+function formatAmountInput(value: string) {
+  const digits = value.replace(/[^0-9]/g, "");
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 
 export default function Home() {
   const [curve, setCurve] = useState<YieldCurve | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [term, setTerm] = useState("3M");
-  const [amount, setAmount] = useState("10000");
+  const [amount, setAmount] = useState("10,000");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -48,7 +54,7 @@ export default function Home() {
     const response = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-      body: JSON.stringify({ term, amount, yield: selectedPoint?.yield }),
+      body: JSON.stringify({ term, amount: Number(amount.replace(/,/g, "")), yield: selectedPoint?.yield }),
     });
     const data = await response.json();
     if (!response.ok) setMessage(data.error || "Unable to submit order.");
@@ -82,7 +88,7 @@ export default function Home() {
           </div>
 
           <aside className="rounded-2xl border border-line bg-panel p-5 sm:p-6"><div className="mb-6"><p className="font-mono text-xs uppercase tracking-[0.2em] text-amber">New order</p><h2 className="mt-2 text-xl font-semibold text-white">Build a position</h2><p className="mt-2 text-sm leading-5 text-slate-400">Choose a term and notional amount. This creates a paper order for review.</p></div>
-            <form onSubmit={submitOrder} className="space-y-5"><label className="block"><span className="mb-2 block text-xs font-medium uppercase tracking-wider text-slate-400">Maturity term</span><select value={term} onChange={(e) => setTerm(e.target.value)} className="w-full rounded-xl border border-line bg-ink px-3 py-3 text-sm text-white outline-none transition focus:border-cyan">{curve?.points.map((point) => <option key={point.term} value={point.term}>{point.term} Treasury · {point.yield.toFixed(2)}%</option>)}</select></label><label className="block" htmlFor="order-amount"><span className="mb-2 block text-xs font-medium uppercase tracking-wider text-slate-400">Order amount</span><div className="relative"><span className="absolute left-3 top-3 text-slate-500">$</span><input id="order-amount" aria-label="Order amount" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" className="w-full rounded-xl border border-line bg-ink py-3 pl-8 pr-3 text-sm text-white outline-none transition focus:border-cyan" placeholder="10,000" /></div></label><div className="rounded-xl border border-line bg-ink/70 p-4"><div className="flex justify-between text-xs text-slate-500"><span>Indicative yield</span><span className="font-mono text-cyan">{selectedPoint ? `${selectedPoint.yield.toFixed(2)}%` : "—"}</span></div><div className="mt-3 flex justify-between text-xs text-slate-500"><span>Estimated annual interest</span><span className="font-mono text-slate-200">{selectedPoint && amount ? currency.format(Number(amount) * selectedPoint.yield / 100) : "—"}</span></div></div><button disabled={submitting || !curve} className="w-full rounded-xl bg-cyan px-4 py-3 text-sm font-semibold text-ink transition hover:bg-cyan/90 disabled:cursor-not-allowed disabled:opacity-50">{submitting ? "Submitting…" : "Submit paper order"}</button>{message && <p className={`text-center text-xs ${message.includes("Unable") || message.includes("valid") ? "text-red-300" : "text-cyan"}`}>{message}</p>}</form>
+            <form onSubmit={submitOrder} className="space-y-5"><label className="block"><span className="mb-2 block text-xs font-medium uppercase tracking-wider text-slate-400">Maturity term</span><select value={term} onChange={(e) => setTerm(e.target.value)} className="w-full rounded-xl border border-line bg-ink px-3 py-3 text-sm text-white outline-none transition focus:border-cyan">{curve?.points.map((point) => <option key={point.term} value={point.term}>{point.term} Treasury · {point.yield.toFixed(2)}%</option>)}</select></label><label className="block" htmlFor="order-amount"><span className="mb-2 block text-xs font-medium uppercase tracking-wider text-slate-400">Order amount</span><div className="relative"><span className="absolute left-3 top-3 text-slate-500">$</span><input id="order-amount" aria-label="Order amount" value={amount} onChange={(e) => setAmount(formatAmountInput(e.target.value))} inputMode="numeric" className="w-full rounded-xl border border-line bg-ink py-3 pl-8 pr-3 text-sm text-white outline-none transition focus:border-cyan" placeholder="10,000" /></div></label><div className="rounded-xl border border-line bg-ink/70 p-4"><div className="flex justify-between text-xs text-slate-500"><span>Indicative yield</span><span className="font-mono text-cyan">{selectedPoint ? `${selectedPoint.yield.toFixed(2)}%` : "—"}</span></div><div className="mt-3 flex justify-between text-xs text-slate-500"><span>Estimated annual interest</span><span className="font-mono text-slate-200">{selectedPoint && amount ? currencyWithCents.format(Number(amount.replace(/,/g, "")) * selectedPoint.yield / 100) : "—"}</span></div></div><button disabled={submitting || !curve} className="w-full rounded-xl bg-cyan px-4 py-3 text-sm font-semibold text-ink transition hover:bg-cyan/90 disabled:cursor-not-allowed disabled:opacity-50">{submitting ? "Submitting…" : "Submit paper order"}</button>{message && <p className={`text-center text-xs ${message.includes("Unable") || message.includes("valid") ? "text-red-300" : "text-cyan"}`}>{message}</p>}</form>
           </aside>
         </section>
 
