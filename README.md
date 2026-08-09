@@ -13,8 +13,8 @@ You only need Node.js 20 or newer and npm to run the app locally. Supabase is op
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/mpaustin/t-bill-orders.git
-cd t-bill-orders
+git clone https://github.com/mpaustin/t-bill-desk.git
+cd t-bill-desk
 npm install
 ```
 
