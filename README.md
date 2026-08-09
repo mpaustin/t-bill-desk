@@ -292,3 +292,15 @@ supabase/config.toml     Supabase CLI and Auth configuration
 supabase/migrations      Versioned database migrations
 supabase/schema.sql      SQL equivalent of the orders schema
 ```
+
+## Future considerations
+
+If the app were taken further, potential next steps would include:
+
+1. Implement actual user accounts and authentication in place of anonymous user sessions.
+2. Cache fetched Treasury yields for each business day since they do not change intraday.
+3. Calculate and store daily interest earned on executed orders, then display it in the UI.
+4. Display term progress for each order.
+5. Connect to a brokerage for executing actual orders rather than only simulated submissions.
+6. Add broader test coverage, including UI tests.
+7. Host and deploy the app for production use.
