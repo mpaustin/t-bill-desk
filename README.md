@@ -1,190 +1,98 @@
 # T-Bill Desk
 
-T-Bill Desk is a full-stack order workspace for exploring the U.S. Treasury yield curve and submitting Treasury orders.
+T-Bill Desk is a full-stack workspace for exploring the U.S. Treasury yield curve and submitting Treasury orders.
 
-It:
+![T-Bill Desk preview](./public/t-bill-desk-preview.png)
 
-- Fetches daily par yield curve data from the official U.S. Treasury XML feed.
-- Plots maturities from 1 month through 30 years.
-- Lets a user choose a maturity and submit an order amount.
-- Stores order history in Supabase.
-- Uses anonymous Supabase Auth so users can begin without account creation.
+It fetches daily par yields from the official U.S. Treasury feed, plots maturities from 1 month through 30 years, and shows order history.
 
-## Prerequisites
+## Quick start
 
-Install these before starting:
+You only need Node.js 20 or newer and npm to run the app locally. Supabase is optional.
 
-- Node.js 20 or newer
-- npm
-- Git
-- A Supabase account
-- The Supabase CLI
-
-You do not need Docker for the hosted Supabase workflow below. Docker is only needed if you want to run the entire Supabase stack locally with `supabase start`.
-
-## 1. Clone the repository
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/mpaustin/t-bill-orders.git
 cd t-bill-orders
+npm install
 ```
 
-If you already have the repository, make sure you are in the checkout you intend to run:
+### 2. Start the app (defaulted to port 3000)
 
 ```bash
-pwd
+npm run dev
 ```
 
-## 2. Install the Supabase CLI
+### Running without Supabase
 
-Use the native CLI on macOS. Do not use `npx supabase` on macOS if it reports a `darwin-x64` or `darwin-arm64` binary mismatch.
+No environment file or Supabase account is required for local use. If Supabase is not configured, orders are saved in your browser's `localStorage` instead of a database. They remain available after restarting the Next.js server, as long as you use the same browser and URL.
 
-### Homebrew
+Local storage is specific to each browser and origin. Clearing site data, using an incognito window, or switching between `localhost:3000`, `localhost:3001`, and `127.0.0.1:3000` creates a separate order history.
+
+The app still fetches live Treasury data in this mode. If the Treasury feed is unavailable, it displays fallback market data so the order workflow remains available.
+
+## Optional: Supabase persistence
+
+Use Supabase if you want database-backed order history and anonymous user sessions. You can skip this section if browser-local persistence is sufficient.
+
+### 1. Create a Supabase project
+
+Create a project at [supabase.com/dashboard](https://supabase.com/dashboard). From the project’s **Settings → General** page, copy the project reference. You will also need the project URL, anon key, and service-role key from **Settings → API**.
+
+### 2. Install and authenticate the Supabase CLI
+
+The CLI is optional for the local-storage workflow. On macOS, install the native CLI with Homebrew:
 
 ```bash
 brew install supabase/tap/supabase
-supabase --version
-```
-
-If Homebrew cannot install the formula because of an Xcode/toolchain issue, use the official standalone binary instead. This example selects the correct binary for Apple Silicon or Intel macOS:
-
-```bash
-SUPABASE_CLI_VERSION=2.113.0
-SUPABASE_MACHINE_ARCH="$(uname -m)"
-
-if [ "$SUPABASE_MACHINE_ARCH" = "arm64" ]; then
-  SUPABASE_CLI_ASSET="darwin_arm64"
-else
-  SUPABASE_CLI_ASSET="darwin_amd64"
-fi
-
-curl -L "https://github.com/supabase/cli/releases/download/v${SUPABASE_CLI_VERSION}/supabase_${SUPABASE_CLI_VERSION}_${SUPABASE_CLI_ASSET}.tar.gz" \
-  -o /tmp/supabase-cli.tar.gz
-
-tar -xzf /tmp/supabase-cli.tar.gz -C /tmp
-mkdir -p "$HOME/bin"
-install -m 0755 /tmp/supabase "$HOME/bin/supabase"
-export PATH="$HOME/bin:$PATH"
-
-supabase --version
-```
-
-The CLI is available from the [official Supabase CLI releases](https://github.com/supabase/cli/releases) and [installation documentation](https://supabase.com/docs/guides/local-development/cli/getting-started).
-
-## 3. Authenticate the Supabase CLI
-
-Run:
-
-```bash
 supabase login
 ```
 
-The CLI opens a browser login page and displays a verification code. Complete the browser login, then paste the verification code back into the terminal prompt.
-
-You can also authenticate with a personal access token:
-
-```bash
-supabase login --token YOUR_PERSONAL_ACCESS_TOKEN
-```
-
-Create personal access tokens at [Supabase Account → Access Tokens](https://supabase.com/dashboard/account/tokens). A project API key is not the same thing as a CLI personal access token.
-
-Verify authentication:
+The login command opens a browser and asks you to confirm a verification code. Check that it worked:
 
 ```bash
 supabase projects list
 ```
 
-## 4. Create or choose a Supabase project
+### Windows (PowerShell)
 
-List your organizations:
+Install the CLI with [Scoop](https://scoop.sh/):
 
-```bash
-supabase orgs list
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+irm get.scoop.sh | iex
+scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+scoop install supabase
+supabase --version
 ```
 
-List existing projects:
+Then run `supabase login` and complete the browser verification step described above.
 
-```bash
-supabase projects list
-```
+If `npx supabase` reports an architecture or binary mismatch, use the native package-manager CLI for your platform instead. See the [official Supabase CLI installation guide](https://supabase.com/docs/guides/local-development/cli/getting-started) for other platforms.
 
-If you need to create a new project, set a database password and run:
+### 3. Link the project and apply the schema
 
-```bash
-read -s SUPABASE_DB_PASSWORD
-export SUPABASE_DB_PASSWORD
-
-supabase projects create t-bill-orders \
-  --org-id YOUR_ORGANIZATION_ID \
-  --region us-east-2 \
-  --db-password "$SUPABASE_DB_PASSWORD"
-
-unset SUPABASE_DB_PASSWORD
-```
-
-Run `supabase projects list` again and copy the project reference (`ref`) for the project you want to use.
-
-## 5. Link the repository to Supabase
-
-Set the project reference in your current terminal session:
+From the repository root:
 
 ```bash
 export SUPABASE_PROJECT_REF=YOUR_PROJECT_REF
-```
-
-Link the local repository:
-
-```bash
 supabase link --project-ref "$SUPABASE_PROJECT_REF"
-```
-
-The repository already contains `supabase/config.toml` and the database migration under `supabase/migrations`.
-
-## 6. Apply the database and Auth configuration
-
-Push the checked-in Supabase configuration. This enables anonymous sign-ins:
-
-```bash
 supabase config push --project-ref "$SUPABASE_PROJECT_REF"
-```
-
-Apply the `orders` table and row-level security policies:
-
-```bash
 supabase db push
 ```
 
-Confirm the migration was applied:
+These commands enable anonymous sign-ins and create the `public.orders` table with row-level security. The checked-in migration is at [`supabase/migrations/20260809074500_create_orders.sql`](./supabase/migrations/20260809074500_create_orders.sql), with equivalent SQL in [`supabase/schema.sql`](./supabase/schema.sql).
 
-```bash
-supabase migration list --linked
-```
+### 4. Add environment variables
 
-The migration creates:
-
-- `public.orders`
-- A `user_id` column tied to Supabase Auth users
-- Term and minimum-amount constraints
-- Row-level security policies restricting users to their own orders
-
-The equivalent SQL is available in [`supabase/schema.sql`](./supabase/schema.sql).
-
-## 7. Create local environment variables
-
-Copy the example file:
+Create `.env.local` in the repository root:
 
 ```bash
 cp .env.example .env.local
 ```
 
-Retrieve the project keys:
-
-```bash
-supabase projects api-keys --project-ref "$SUPABASE_PROJECT_REF"
-```
-
-Edit `.env.local` and fill in:
+Fill it with the values from **Settings → API**:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
@@ -192,43 +100,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY
 ```
 
-Use the `anon` key for `NEXT_PUBLIC_SUPABASE_ANON_KEY` and the `service_role` key for `SUPABASE_SERVICE_ROLE_KEY`. The application currently uses these legacy key names.
+Restart `npm run dev` after changing `.env.local`. Keep the service-role key server-only: never commit `.env.local`, put this key in a `NEXT_PUBLIC_` variable, or share it publicly.
 
-Security requirements:
-
-- Never commit `.env.local`.
-- Never put the service-role key in a `NEXT_PUBLIC_` variable.
-- Never paste the service-role key into GitHub, screenshots, or a public issue.
-
-## 8. Install dependencies and run the app
-
-```bash
-npm install
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-If port 3000 is already in use:
-
-```bash
-npm run dev -- --port 3001
-```
-
-Use the same exact host and port each time. `localhost:3000`, `localhost:3001`, and `127.0.0.1:3000` are different browser origins and therefore have different anonymous-user sessions.
-
-## 9. Verify the app
-
-1. Confirm the yield curve loads.
-2. Choose a maturity and enter an amount of at least `$100`.
-3. Submit an order.
-4. Confirm it appears in Order History.
-5. Refresh the page and confirm the order is still present.
-6. In Supabase, open **Table Editor → orders** to inspect the stored row.
-
-The app uses an anonymous Supabase user. Restarting the Next.js server does not create a new user; the browser session is retained. Clearing browser data, using a different browser, using an incognito window, or changing the origin creates a different anonymous user and therefore a different order history.
-
-If the Treasury feed is unavailable, the app displays fallback market data so the order workflow remains available.
+When Supabase is configured, the app uses anonymous Supabase Auth and stores each user’s orders in the database. The browser session is retained across app restarts, but changing browsers or origins creates a different anonymous user.
 
 ## Useful commands
 
@@ -236,37 +110,26 @@ If the Treasury feed is unavailable, the app displays fallback market data so th
 # Run the app
 npm run dev
 
+# Run API tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
 # Validate a production build
 npm run build
 
-# Check Supabase migration state
+# Supabase migration commands, after linking a project
 supabase migration list --linked
-
-# Preview pending database migrations
 supabase db push --dry-run
-
-# Apply pending database migrations
 supabase db push
 ```
 
 ## Troubleshooting
 
-### `No matching Supabase CLI binary package found`
+### Orders are not showing
 
-Do not use `npx supabase` on macOS when npm is running under Rosetta or the package lacks your architecture. Install the native CLI with Homebrew or the standalone binary and use `supabase` directly.
-
-Check your architecture:
-
-```bash
-uname -m
-node -p "process.arch"
-```
-
-On an Apple Silicon Mac, `uname -m` should report `arm64`. If Node reports `x64`, reopen Terminal/iTerm without “Open using Rosetta” enabled or use the native standalone CLI.
-
-### Order history is empty after switching URLs
-
-Anonymous sessions are scoped to the browser origin. Use the same URL and port that created the order.
+Use the same browser and exact URL that created the order. Without Supabase, order history is stored in browser local storage. With Supabase, anonymous sessions are also scoped to the browser origin.
 
 ### Supabase changes are not visible
 
@@ -278,7 +141,7 @@ npm run dev
 
 ### `supabase db push` mentions Docker
 
-For a hosted project, the remote migration can still apply. Docker is only required for commands that run the local Supabase stack, such as `supabase start`.
+Docker is not required for the hosted Supabase workflow above. It is only needed for running the full Supabase stack locally with `supabase start`.
 
 ## Project structure
 
@@ -301,6 +164,6 @@ If the app were taken further, potential next steps would include:
 2. Cache fetched Treasury yields for each business day since they do not change intraday.
 3. Calculate and store daily interest earned on executed orders, then display it in the UI.
 4. Display term progress for each order.
-5. Connect to a brokerage for executing actual orders rather than only simulated submissions.
+5. Connect to a brokerage for executing actual orders rather than only submitting them through this app.
 6. Add broader test coverage, including UI tests.
 7. Host and deploy the app for production use.
