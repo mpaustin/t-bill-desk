@@ -5,11 +5,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#0b1118",
-        panel: "#111b26",
-        line: "#243342",
-        cyan: "#56d6c9",
+        ink: "#000000",
+        panel: "#080808",
+        line: "#252525",
+        forest: "#00c805",
         amber: "#f4b860",
+        slate: {
+          300: "#c7c7c7",
+          400: "#ababab",
+          500: "#909090",
+          600: "#686868",
+          700: "#444444",
+        },
       },
       fontFamily: {
         sans: ["var(--font-inter)", "ui-sans-serif", "system-ui"],

@@ -27,29 +27,29 @@ export function YieldChart({ points }: { points: YieldPoint[] }) {
       <svg viewBox={`0 0 ${width} ${height}`} className="min-w-[680px] w-full" role="img" aria-label="Treasury yield curve chart">
         <defs>
           <linearGradient id="curve-fill" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#56d6c9" stopOpacity="0.23" />
-            <stop offset="100%" stopColor="#56d6c9" stopOpacity="0" />
+            <stop offset="0%" stopColor="#00c805" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#00c805" stopOpacity="0" />
           </linearGradient>
         </defs>
         {ticks.map((tick) => (
           <g key={tick}>
-            <line x1={pad.left} x2={width - pad.right} y1={y(tick)} y2={y(tick)} stroke="#243342" strokeDasharray="4 6" />
-            <text x={pad.left - 10} y={y(tick) + 4} fill="#70818e" fontSize="12" textAnchor="end">{tick.toFixed(1)}%</text>
+            <line x1={pad.left} x2={width - pad.right} y1={y(tick)} y2={y(tick)} stroke="#505050" strokeDasharray="4 6" />
+            <text x={pad.left - 10} y={y(tick) + 4} fill="#a3adb5" fontSize="12" textAnchor="end">{tick.toFixed(1)}%</text>
           </g>
         ))}
         <polygon points={area} fill="url(#curve-fill)" />
-        <polyline points={line} fill="none" stroke="#56d6c9" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <polyline points={line} fill="none" stroke="#00c805" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         {points.map((point, index) => (
           <g key={point.term} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)}>
-            <circle cx={x(index)} cy={y(point.yield)} r="5" fill="#0b1118" stroke="#56d6c9" strokeWidth="2" aria-label={`${point.term} Treasury yield ${point.yield.toFixed(2)}%`}>
+            <circle cx={x(index)} cy={y(point.yield)} r="5" fill="#000000" stroke="#00c805" strokeWidth="2" aria-label={`${point.term} Treasury yield ${point.yield.toFixed(2)}%`}>
               <title>{`${point.term} Treasury: ${point.yield.toFixed(2)}%`}</title>
             </circle>
-            <text x={x(index)} y={height - 16} fill="#91a1ab" fontSize="12" textAnchor="middle">{point.term}</text>
+            <text x={x(index)} y={height - 16} fill="#b3bdc4" fontSize="12" textAnchor="middle">{point.term}</text>
           </g>
         ))}
         {hoveredPoint && hoveredIndex !== null && (
           <g pointerEvents="none">
-            <rect x={tooltipX} y={tooltipY} width={tooltipWidth} height={tooltipHeight} rx="6" fill="#0b1118" stroke="#56d6c9" />
+            <rect x={tooltipX} y={tooltipY} width={tooltipWidth} height={tooltipHeight} rx="6" fill="#000000" stroke="#00c805" />
             <text x={tooltipX + tooltipWidth / 2} y={tooltipY + 19} fill="#f5f7f8" fontSize="12" textAnchor="middle">{`${hoveredPoint.term} · ${hoveredPoint.yield.toFixed(2)}%`}</text>
           </g>
         )}
