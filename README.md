@@ -156,6 +156,14 @@ supabase/migrations      Versioned database migrations
 supabase/schema.sql      SQL equivalent of the orders schema
 ```
 
+## Why Next.js and TypeScript?
+
+Next.js lets the app keep its React interface and backend API routes in one repository. The API routes centralize Treasury data fetching, fallback handling, order validation, and Supabase access without requiring a separate server. It also provides a straightforward path to authentication, testing, and production deployment if the app grows.
+
+TypeScript adds shared types for yield curves and orders, catching data mismatches during development and making the API and UI contracts easier to understand.
+
+Supabase provides a quick way to add a hosted Postgres database and authentication. Anonymous Auth lets users submit orders without creating an account for the demo workflow, while the platform provides a straightforward path to persistent user accounts and higher-scale usage in the future.
+
 ## Future considerations
 
 If the app were taken further, potential next steps would include:
