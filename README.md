@@ -1,9 +1,8 @@
 # T-Bill Desk
 
-T-Bill Desk is a full-stack workspace for exploring the U.S. Treasury yield curve and submitting Treasury orders.
-
 ![T-Bill Desk preview](./public/t-bill-desk-preview.png)
 
+T-Bill Desk is a full-stack workspace for exploring the U.S. Treasury yield curve and submitting Treasury orders.
 It fetches daily par yields from the official U.S. Treasury feed, plots maturities from 1 month through 30 years, and shows order history.
 
 ## Quick start
