@@ -168,7 +168,7 @@ Supabase provides a quick way to add a hosted Postgres database and authenticati
 If the app were taken further, potential next steps would include:
 
 1. Implement actual user accounts and authentication in place of anonymous user sessions.
-2. Cache fetched Treasury yields for each business day since they do not change intraday.
+2. Refresh Treasury yields on a specified interval so the UI updates with intraday yield changes.
 3. Calculate and store daily interest earned on executed orders, then display it in the UI.
 4. Track cumulative amount invested and weighted APY.
 5. Display term progress for each order.
